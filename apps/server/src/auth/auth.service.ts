@@ -23,7 +23,7 @@ export class AuthService {
 
   async register(createUserDto: CreateUserDto) {
     await this.userService.create(createUserDto);
-    await this.mailService.sendVerificationCode(createUserDto.email);
+    // await this.mailService.sendVerificationCode(createUserDto.email);
 
     return {
       message: `An email has been sent to ${createUserDto.email}, please check your inbox`,

@@ -78,14 +78,14 @@ export class DbseedService {
   async addAnimeGenres(): Promise<Genres> {
     const api = 'https://api.jikan.moe/v4/genres/anime';
     const { data } = await firstValueFrom(
-      this.httpService.get<{ data: { name: string }[] }>(`${api}`).pipe(
+      this.httpService.get<any>(`${api}`).pipe(
         catchError((error) => {
           console.log(error.response.data);
           throw 'An error happened retrieving animes genres!';
         })
       )
     );
-    const transformedData = data.data.map((genre) => genre.name);
+    const transformedData = data.data.map((genre: any) => genre.name);
     const genres = { belongsTo: 'Animes', genres: transformedData };
     try {
       const response = await this.genresService.findByBelongsTo(

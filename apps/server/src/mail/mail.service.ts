@@ -39,7 +39,7 @@ export class MailService {
         text: `Welcome to wave! Here is your verification code: ${code}`,
       });
       await this.redis.set(to, code);
-
+      console.log(code);
       return code.toString();
     } catch (e: unknown) {
       if (e instanceof Error)
