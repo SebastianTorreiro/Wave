@@ -4,6 +4,7 @@ import { Icons } from 'components/Icons'
 import { useFormFields } from 'hooks/useFormFields'
 import { useValidator } from 'hooks/useValidation'
 import { useSession } from 'hooks/useSession'
+import { useRouter } from 'next/navigation'
 
 const { HiddenPassword, ViewPassword } = Icons
 
@@ -12,6 +13,7 @@ type Errors<T> = {
 };
 
 export function Login () {
+  const router = useRouter() // <--- AGREGAR ESTO
   const [showPassword, setShowPassword] = useState(false)
   const { fields, handleChange } = useFormFields<{ password: string, email: string }>()
   const [errors, setErrors] = useState<Errors<typeof fields>>()
@@ -51,6 +53,11 @@ export function Login () {
         .then(data => {
           console.log(data)
           setSession(data)
+          if (data.user?.categorys?.length > 0) {
+            router.push('/home') // O '/messages/matches' según tu flujo
+          } else {
+            router.push('/setup-account')
+          }
         })
         .catch((e) => {
           setErrors({ password: undefined, email: 'Credenciales inválidas.' })
