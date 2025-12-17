@@ -92,6 +92,23 @@ export function YourTastes () {
           {selected.length > 0 ? <b className={style.delete} onClick={deletePins}>Borrar todos</b> : null}
           <p className={style.count}>{selected.length}/3</p>
         </span>
+        {selected.length > 0 && (
+  <div className={style.form__pins} style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+    {selected.map((pin: any, i: number) => (
+              <div
+                key={pin.name + i}
+                className={style['form__pins--item']}
+                onClick={() => handleSelect(pin)} // Permitir deseleccionar al hacer click
+                title={`Quitar ${pin.name}`}
+              >
+                <img
+                  alt={pin.name}
+                  src={pin.imgUrl}
+                  style={{ border: '3px solid #21cca4' }} // Borde verde para indicar "Selected"
+                />
+              </div>))}
+          </div>
+        )}
 
         {pins.length > 0
           ? (

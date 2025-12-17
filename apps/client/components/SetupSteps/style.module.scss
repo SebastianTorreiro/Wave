@@ -197,22 +197,32 @@
       max-width: 100%;
     }
   }
-
+  
   .form__pins {
-    display: grid;
-    grid-template-columns: repeat(5, 70px);
-    grid-template-rows: repeat(3, 70px);
-    gap: 10px;
+    display: flex; /* Flex es mejor para listas variables que Grid fijo */
+    flex-wrap: wrap; /* Permite que bajen si no entran */
+    gap: 15px; /* Un poco más de aire */
+    justify-content: flex-start; /* Alineados a la izquierda */
     cursor: pointer;
+    margin-top: 10px;
 
-    .form__pins--item  {
+    .form__pins--item {
       border-radius: 50%;
       padding: 3px;
+      width: 70px; /* Tamaño fijo para el contenedor */
+      height: 70px;
+      transition: transform 0.2s ease; /* Pequeña animación al hover */
 
-      
+      &:hover {
+        transform: scale(1.05);
+      }
+
       img {
         border-radius: 50%;
         aspect-ratio: 1/1;
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Evita que la imagen se deforme */
       }
     }
   }
