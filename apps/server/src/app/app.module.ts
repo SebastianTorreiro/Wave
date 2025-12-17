@@ -9,6 +9,7 @@ import { pojos } from '@automapper/pojos';
 import { AuthModule } from '../auth/auth.module';
 import { RecomModule } from '../recom/recom.module';
 import { ChatModule } from '../chat/chat.module';
+import { DbseedModule } from '../dbseed/dbseed.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ChatModule } from '../chat/chat.module';
     UserModule,
     RecomModule,
     ChatModule,
+    DbseedModule,
   ],
   controllers: [],
   providers: [],

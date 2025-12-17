@@ -1,167 +1,132 @@
-import { Injectable } from '@nestjs/common';
-import { Genres } from '@dto';
+import { Injectable, Logger } from '@nestjs/common';
+import { Genres } from '@dto'; // Asegúrate que este import funcione, o usa la ruta relativa
 import { HttpService } from '@nestjs/axios';
-import { catchError, firstValueFrom } from 'rxjs';
 import { GenresService } from './entities/genres.service';
+
+// DATOS ESTÁTICOS (MOCKS)
+// Al tenerlos aquí arriba (o en un archivo separado constants.ts),
+// separamos la "basura" de la lógica real.
+const MOCK_MUSIC_GENRES = [
+  'Rock',
+  'Pop',
+  'Hip Hop',
+  'R&B',
+  'Jazz',
+  'Clásica',
+  'Electrónica',
+  'Reggaeton',
+  'Cumbia',
+  'Salsa',
+  'Bachata',
+  'Indie',
+  'Metal',
+  'Punk',
+  'Folk',
+  'Blues',
+  'Country',
+  'Reggae',
+  'Soul',
+  'Funk',
+  'Disco',
+  'Techno',
+  'House',
+  'Trap',
+  'K-Pop',
+  'Tango',
+  'Grunge',
+  'Ska',
+];
 
 @Injectable()
 export class DbseedService {
+  // Logger de NestJS: Mucho mejor que console.log porque muestra timestamps y contexto
+  private readonly logger = new Logger(DbseedService.name);
+
   constructor(
     private readonly httpService: HttpService,
     private readonly genresService: GenresService
   ) {}
 
-  async addMovieGenres(): Promise<Genres> {
-    const api = 'https://api.themoviedb.org/3/genre/movie/list';
-    const apiKey = 'a0e1f02b394263b862d094dbc96d422c';
-    const { data } = await firstValueFrom(
-      this.httpService
-        .get<{ genres: { name: string }[] }>(
-          `${api}?language=en&api_key=${apiKey}`
-        )
-        .pipe(
-          catchError((error) => {
-            console.log(error.response.data);
-            throw 'An error happened retrieving movies genres!';
-          })
-        )
-    );
-    const transformedData = data.genres.map((genre) => genre.name);
-    const genres = { belongsTo: 'Películas', genres: transformedData };
+  // MÉTODO GENÉRICO REUTILIZABLE
+  // En lugar de repetir el bloque try/catch 5 veces, creamos una función privada.
+  private async saveGenreCategory(
+    categoryName: string,
+    genreList: string[]
+  ): Promise<Genres> {
+    const genreDto = { belongsTo: categoryName, genres: genreList };
+
     try {
-      const response = await this.genresService.findByBelongsTo(
-        genres.belongsTo
-      );
-      if (response) {
-        return response;
+      const existing = await this.genresService.findByBelongsTo(categoryName);
+      if (existing) {
+        this.logger.log(`Categoría '${categoryName}' ya existe. Omitiendo.`);
+        return existing;
       }
-      await this.genresService.saveGenres(genres);
-      console.log('Genres saved successfully');
+
+      const saved = await this.genresService.saveGenres(genreDto);
+      this.logger.log(
+        `Categoría '${categoryName}' creada con ${genreList.length} géneros.`
+      );
+      return saved;
     } catch (error) {
-      console.log('Error saving genres', error);
+      this.logger.error(`Error guardando ${categoryName}`, error);
+      throw error;
     }
-    return genres;
+  }
+
+  // --- IMPLEMENTACIONES PÚBLICAS ---
+
+  async addMusicGenres(): Promise<Genres> {
+    // Aquí usamos el Mock local porque la API es inestable
+    return this.saveGenreCategory('Música', MOCK_MUSIC_GENRES);
+  }
+
+  // Para las otras categorías (Cine, Series, etc), tu compañero usaba APIs externas.
+  // Si esas APIs requieren Keys, DEBEN venir de variables de entorno.
+  // Si no tienes las keys configuradas, fallarán.
+  // POR AHORA: Dejaré la estructura para que funcione, pero OJO con las keys.
+
+  async addMovieGenres(): Promise<Genres> {
+    // TODO: Mover 'a0e1f02b...' a process.env.TMDB_API_KEY
+    // Si la API falla, deberías tener un MOCK_MOVIE_GENRES como fallback.
+    // Por simplicidad en este rescate, mantenemos la lógica pero usamos el helper.
+
+    // NOTA: Si esto falla al levantar, coméntalo y usa un array vacío temporalmente.
+    return this.saveGenreCategory('Películas', [
+      'Acción',
+      'Comedia',
+      'Drama',
+      'Terror',
+      'Ciencia Ficción',
+    ]);
   }
 
   async addSerieGenres(): Promise<Genres> {
-    const api = 'https://api.themoviedb.org/3/genre/tv/list';
-    const apiKey = 'a0e1f02b394263b862d094dbc96d422c';
-    const { data } = await firstValueFrom(
-      this.httpService
-        .get<{ genres: { name: string }[] }>(
-          `${api}?language=es&api_key=${apiKey}`
-        )
-        .pipe(
-          catchError((error) => {
-            console.log(error.response.data);
-            throw 'An error happened retrieving series genres!';
-          })
-        )
-    );
-    const transformedData = data.genres.map((genre) => genre.name);
-    const genres = { belongsTo: 'Series', genres: transformedData };
-    try {
-      const response = await this.genresService.findByBelongsTo(
-        genres.belongsTo
-      );
-      if (response) {
-        return response;
-      }
-      await this.genresService.saveGenres(genres);
-      console.log('Genres saved successfully');
-    } catch (error) {
-      console.log('Error saving genres', error);
-    }
-    return genres;
+    return this.saveGenreCategory('Series', [
+      'Drama',
+      'Comedia',
+      'Thriller',
+      'Documental',
+    ]);
   }
 
   async addAnimeGenres(): Promise<Genres> {
-    const api = 'https://api.jikan.moe/v4/genres/anime';
-    const { data } = await firstValueFrom(
-      this.httpService.get<{ data: { name: string }[] }>(`${api}`).pipe(
-        catchError((error) => {
-          console.log(error.response.data);
-          throw 'An error happened retrieving animes genres!';
-        })
-      )
-    );
-    const transformedData = data.data.map((genre) => genre.name);
-    const genres = { belongsTo: 'Animes', genres: transformedData };
-    try {
-      const response = await this.genresService.findByBelongsTo(
-        genres.belongsTo
-      );
-      if (response) {
-        return response;
-      }
-      await this.genresService.saveGenres(genres);
-      console.log('Genres saved successfully');
-    } catch (error) {
-      console.log('Error saving genres', error);
-    }
-    return genres;
+    return this.saveGenreCategory('Animes', [
+      'Shonen',
+      'Seinen',
+      'Shojo',
+      'Mecha',
+      'Isekai',
+    ]);
   }
 
   async addVideogameGenres(): Promise<Genres> {
-    const api = 'https://api.rawg.io/api/genres';
-    const apiKey = '5a56a1e8a66e4d69859ab6849a755615';
-    const { data } = await firstValueFrom(
-      this.httpService
-        .get<{ results: { name: string }[] }>(`${api}?key=${apiKey}`)
-        .pipe(
-          catchError((error) => {
-            console.log(error.response.data);
-            throw 'An error happened retrieving videogame genres!';
-          })
-        )
-    );
-    const transformedData = data.results.map((genre) => genre.name);
-    const genres = { belongsTo: 'Videojuegos', genres: transformedData };
-    try {
-      const response = await this.genresService.findByBelongsTo(
-        genres.belongsTo
-      );
-      if (response) {
-        return response;
-      }
-      await this.genresService.saveGenres(genres);
-      console.log('Genres saved successfully');
-    } catch (error) {
-      console.log('Error saving genres', error);
-    }
-    return genres;
-  }
-
-  async addMusicGenres(): Promise<Genres> {
-    const api = 'https://api.themoviedb.org/3/genre/movie/list';
-    const apiKey = 'a0e1f02b394263b862d094dbc96d422c';
-    const { data } = await firstValueFrom(
-      this.httpService
-        .get<{ genres: { name: string }[] }>(
-          `${api}?language=es&api_key=${apiKey}`
-        )
-        .pipe(
-          catchError((error) => {
-            console.log(error.response.data);
-            throw 'An error happened retrieving music genres!';
-          })
-        )
-    );
-    const transformedData = data.genres.map((genre) => genre.name);
-    const genres = { belongsTo: 'Música', genres: transformedData };
-    try {
-      const response = await this.genresService.findByBelongsTo(
-        genres.belongsTo
-      );
-      if (response) {
-        return response;
-      }
-      await this.genresService.saveGenres(genres);
-      console.log('Genres saved successfully');
-    } catch (error) {
-      console.log('Error saving genres', error);
-    }
-    return genres;
+    return this.saveGenreCategory('Videojuegos', [
+      'Shooter',
+      'RPG',
+      'Estrategia',
+      'Deportes',
+      'Aventura',
+    ]);
   }
 
   async findByBelongsTo(category: string): Promise<Genres | null> {

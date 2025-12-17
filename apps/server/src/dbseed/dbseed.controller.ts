@@ -5,20 +5,20 @@ import { DbseedService } from './dbseed.service';
 export class DbseedController {
   constructor(private readonly dbseedService: DbseedService) {}
 
-  @Post('saveMovies')
-  movieGenres() {
-    return this.dbseedService.addMovieGenres();
+  @Post('init')
+  async seedAll() {
+    return Promise.all([
+      this.dbseedService.addMovieGenres(),
+      this.dbseedService.addSerieGenres(),
+      this.dbseedService.addAnimeGenres(),
+      this.dbseedService.addVideogameGenres(),
+      this.dbseedService.addMusicGenres(),
+    ]);
   }
-
   @Get('listMovies')
   async getMovieGenres() {
     const belongsTo = 'Películas';
     return this.dbseedService.findByBelongsTo(belongsTo);
-  }
-
-  @Post('saveSeries')
-  serieGenres() {
-    return this.dbseedService.addSerieGenres();
   }
 
   @Get('listSeries')
@@ -27,31 +27,15 @@ export class DbseedController {
     return this.dbseedService.findByBelongsTo(belongsTo);
   }
 
-  @Post('saveAnimes')
-  animeGenres() {
-    return this.dbseedService.addAnimeGenres();
-  }
-
   @Get('listAnimes')
   async getAnimeGenres() {
     const belongsTo = 'Animes';
     return this.dbseedService.findByBelongsTo(belongsTo);
   }
-
-  @Post('saveVideogames')
-  videogameGenres() {
-    return this.dbseedService.addVideogameGenres();
-  }
-
   @Get('listVideogames')
   async getVideogameGenres() {
     const belongsTo = 'Videojuegos';
     return this.dbseedService.findByBelongsTo(belongsTo);
-  }
-
-  @Post('saveMusic')
-  musicGenres() {
-    return this.dbseedService.addMusicGenres();
   }
 
   @Get('listMusic')
