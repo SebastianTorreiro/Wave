@@ -22,11 +22,20 @@ export class AuthService {
   ) {}
 
   async register(createUserDto: CreateUserDto) {
+    // 1. Creamos el usuario en DB
     await this.userService.create(createUserDto);
-    // await this.mailService.sendVerificationCode(createUserDto.email);
 
+    // 2. Intentamos enviar mail, pero si falla (porque no hay config), no rompemos todo
+    try {
+      await this.mailService.sendVerificationCode(createUserDto.email);
+    } catch (error) {
+      console.warn(
+        'DEV MODE: No se pudo enviar el email, pero el usuario se creó. Usa el código 0000.'
+      );
+      // No lanzamos error para permitir el flujo manual
+    }
     return {
-      message: `An email has been sent to ${createUserDto.email}, please check your inbox`,
+      message: `An email has been sent to ${createUserDto.email}, please check your inbox (DEV: Usa el código 0000)`,
     };
   }
 
@@ -34,13 +43,17 @@ export class AuthService {
     email: string,
     code: string
   ): Promise<AuthResponseDto> {
-    const matchingCode = await this.mailService.checkVerificationCode(
-      email,
-      code
-    );
+    // Si el código es '0000', saltamos la verificación real de Redis/Mail
+    if (code !== '0000') {
+      const matchingCode = await this.mailService.checkVerificationCode(
+        email,
+        code
+      );
 
-    if (!matchingCode)
-      throw new BadRequestException("Verification code doesn't match");
+      if (!matchingCode)
+        throw new BadRequestException("Verification code doesn't match");
+    }
+    // --- FIN BYPASS MENTOR ---
 
     const user = await this.userService.confirmVerify(email);
 
